@@ -9,6 +9,10 @@ __version__ = "0.0pre0"
 
 import nltk
 import requests
+import os
+import datetime
+from urlparse import urlparse
+
 
 class Article(object):
     def __init__(self, url):
@@ -23,10 +27,20 @@ class Article(object):
             response.raise_for_status()
         except requests.exceptions.HTTPError, err:
             print "Unable to fetch article: {}".format(err)
-        self._save_to_file(response)
+        dirname, filename = self._create_filepath(url)
+        self._save_to_file(response, dirname, filename)
 
-    def _save_to_file(self, response):
-        pass
+    def _create_filepath(self, url):
+        parsed = urlparse(url)
+        dirname = '-'.join(parsed.netloc.split('.'))
+        filename = dirname + '_' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") 
+        return dirname, filename
+
+    def _save_to_file(self, response, dirname, filename):
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        with open(dirname + '/' + filename, 'w') as f: 
+            f.write(response.text.encode('utf-8'))
 
 def main():
     url = "http://www.usatoday.com/story/sports/nfl/broncos/2013/09/02/cornerback-champ-bailey-wants-redemption-against-baltimore-ravens-sprained-foot/2755655/?utm_source=dlvr.it&utm_medium=twitter"
